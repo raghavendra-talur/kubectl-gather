@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: The kubectl-gather authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gather
+package remote
 
 import (
 	"os"
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type RemoteCommand struct {
+type Command struct {
 	Kubeconfig string
 	Context    string
 	Namespace  string
@@ -22,7 +22,7 @@ type RemoteCommand struct {
 
 var specialCharacters *regexp.Regexp
 
-func (c *RemoteCommand) Gather(command ...string) error {
+func (c *Command) Gather(command ...string) error {
 	args := []string{"exec", c.Pod}
 	if c.Kubeconfig != "" {
 		args = append(args, "--kubeconfig="+c.Kubeconfig)
@@ -51,7 +51,7 @@ func (c *RemoteCommand) Gather(command ...string) error {
 	return cmd.Run()
 }
 
-func (c *RemoteCommand) Filename(command ...string) string {
+func (c *Command) Filename(command ...string) string {
 	name := strings.Join(command, " ")
 	name = specialCharacters.ReplaceAllString(name, "-")
 	return filepath.Join(c.Directory, name)

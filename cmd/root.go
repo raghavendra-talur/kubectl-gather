@@ -9,10 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nirs/kubectl-gather/pkg/gather"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/nirs/kubectl-gather/pkg/cluster"
+	"github.com/nirs/kubectl-gather/pkg/gather"
 )
 
 var directory string
@@ -77,7 +79,7 @@ func gatherAll(cmd *cobra.Command, args []string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			g, err := gather.New(config, directory, options)
+			g, err := cluster.New(config, directory, options)
 			if err != nil {
 				errors <- err
 				return

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: The kubectl-gather authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gather
+package addons
 
 import (
 	"context"
@@ -14,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+
+	"github.com/nirs/kubectl-gather/pkg/gather"
 )
 
 type logType string
@@ -25,9 +27,9 @@ const (
 
 type LogsAddon struct {
 	client *rest.RESTClient
-	output *OutputDirectory
-	opts   *Options
-	q      Queuer
+	output *gather.Output
+	opts   *gather.Options
+	q      gather.Queuer
 	log    *log.Logger
 }
 
@@ -37,7 +39,7 @@ type containerInfo struct {
 	Name      string
 }
 
-func NewLogsAddon(config *rest.Config, httpClient *http.Client, out *OutputDirectory, opts *Options, q Queuer) (*LogsAddon, error) {
+func NewLogsAddon(config *rest.Config, httpClient *http.Client, out *gather.Output, opts *gather.Options, q gather.Queuer) (*LogsAddon, error) {
 	logsConfig := rest.CopyConfig(config)
 
 	logsConfig.APIPath = "api"
@@ -54,7 +56,7 @@ func NewLogsAddon(config *rest.Config, httpClient *http.Client, out *OutputDirec
 		output: out,
 		opts:   opts,
 		q:      q,
-		log:    createLogger("logs", opts),
+		log:    gather.NewLogger("logs", opts),
 	}, nil
 }
 

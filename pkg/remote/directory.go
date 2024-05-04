@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: The kubectl-gather authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gather
+package remote
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-type RemoteDirectory struct {
+type Directory struct {
 	Kubeconfig string
 	Context    string
 	Namespace  string
@@ -25,7 +25,7 @@ type RemoteDirectory struct {
 
 var tarFileChangedError *regexp.Regexp
 
-func (d *RemoteDirectory) Gather(src string, dst string) error {
+func (d *Directory) Gather(src string, dst string) error {
 	// We run remote tar and pipe the output to local tar:
 	// kubectl exec ... -- tar cf - src | tar xf - -C dst
 
@@ -77,7 +77,7 @@ func (d *RemoteDirectory) Gather(src string, dst string) error {
 	return nil
 }
 
-func (d *RemoteDirectory) isFileChangedError(err error, stderr string) bool {
+func (d *Directory) isFileChangedError(err error, stderr string) bool {
 	// tar may fail with exitcode 1 only when a file changed while copying it.
 	// This is expected condition for log files so we must ignore it.  However,
 	// kubectl also fails with exit code 1, for example if the pod is not found
@@ -86,7 +86,7 @@ func (d *RemoteDirectory) isFileChangedError(err error, stderr string) bool {
 	return ok && exitErr.ExitCode() == 1 && tarFileChangedError.MatchString(stderr)
 }
 
-func (d *RemoteDirectory) remoteTarCommand(src string) *exec.Cmd {
+func (d *Directory) remoteTarCommand(src string) *exec.Cmd {
 	args := []string{
 		"exec",
 		d.Pod,
@@ -105,7 +105,7 @@ func (d *RemoteDirectory) remoteTarCommand(src string) *exec.Cmd {
 	return exec.Command("kubectl", args...)
 }
 
-func (d *RemoteDirectory) localTarCommand(dst string, strip int) *exec.Cmd {
+func (d *Directory) localTarCommand(dst string, strip int) *exec.Cmd {
 	args := []string{
 		"xf",
 		"-",
@@ -116,13 +116,13 @@ func (d *RemoteDirectory) localTarCommand(dst string, strip int) *exec.Cmd {
 	return exec.Command("tar", args...)
 }
 
-func (d *RemoteDirectory) pathComponents(s string) int {
+func (d *Directory) pathComponents(s string) int {
 	sep := string(os.PathSeparator)
 	trimmed := strings.Trim(s, sep)
 	return strings.Count(trimmed, sep) + 1
 }
 
-func (d *RemoteDirectory) log(fmt string, args ...interface{}) {
+func (d *Directory) log(fmt string, args ...interface{}) {
 	if d.Log != nil {
 		d.Log.Printf(fmt, args...)
 	}

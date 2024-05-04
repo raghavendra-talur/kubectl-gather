@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: The kubectl-gather authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gather
+package addons
 
 import (
 	"context"
@@ -16,18 +16,21 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	"github.com/nirs/kubectl-gather/pkg/gather"
+	"github.com/nirs/kubectl-gather/pkg/remote"
 )
 
 type RookAddon struct {
 	name   string
-	out    *OutputDirectory
-	opts   *Options
-	q      Queuer
+	out    *gather.Output
+	opts   *gather.Options
+	q      gather.Queuer
 	client *kubernetes.Clientset
 	log    *log.Logger
 }
 
-func NewRookCephAddon(config *rest.Config, client *http.Client, out *OutputDirectory, opts *Options, q Queuer) (*RookAddon, error) {
+func NewRookCephAddon(config *rest.Config, client *http.Client, out *gather.Output, opts *gather.Options, q gather.Queuer) (*RookAddon, error) {
 	clientSet, err := kubernetes.NewForConfigAndClient(config, client)
 	if err != nil {
 		return nil, err
@@ -39,7 +42,7 @@ func NewRookCephAddon(config *rest.Config, client *http.Client, out *OutputDirec
 		opts:   opts,
 		q:      q,
 		client: clientSet,
-		log:    createLogger("rook", opts),
+		log:    gather.NewLogger("rook", opts),
 	}, nil
 }
 
@@ -89,7 +92,7 @@ func (a *RookAddon) gatherCommands(namespace string) {
 	a.gatherCommand(rc, "ceph", "status")
 }
 
-func (a *RookAddon) gatherCommand(rc *RemoteCommand, command ...string) {
+func (a *RookAddon) gatherCommand(rc *remote.Command, command ...string) {
 	name := strings.Join(command, "-")
 	start := time.Now()
 	if err := rc.Gather(command...); err != nil {
@@ -143,8 +146,8 @@ func (a *RookAddon) findPod(namespace string, labelSelector string) (*corev1.Pod
 	return &pods.Items[0], nil
 }
 
-func (a *RookAddon) remoteCommand(pod *corev1.Pod, dir string) *RemoteCommand {
-	return &RemoteCommand{
+func (a *RookAddon) remoteCommand(pod *corev1.Pod, dir string) *remote.Command {
+	return &remote.Command{
 		Kubeconfig: a.opts.Kubeconfig,
 		Context:    a.opts.Context,
 		Namespace:  pod.Namespace,
@@ -154,8 +157,8 @@ func (a *RookAddon) remoteCommand(pod *corev1.Pod, dir string) *RemoteCommand {
 	}
 }
 
-func (a *RookAddon) remoteDirectory(pod *corev1.Pod) *RemoteDirectory {
-	return &RemoteDirectory{
+func (a *RookAddon) remoteDirectory(pod *corev1.Pod) *remote.Directory {
+	return &remote.Directory{
 		Kubeconfig: a.opts.Kubeconfig,
 		Context:    a.opts.Context,
 		Namespace:  pod.Namespace,
